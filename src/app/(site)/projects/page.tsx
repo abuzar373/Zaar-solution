@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RecentProjectsPage() {
-  const items = await db.select().from(projects).orderBy(desc(projects.createdAt)).limit(12);
+  const items = await safeQuery(
+    () => db.select().from(projects).orderBy(desc(projects.createdAt)).limit(12),
+    [],
+    "projects:recent"
+  );
 
   return (
     <div className="pt-28 pb-24">

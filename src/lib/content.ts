@@ -83,11 +83,27 @@ export const DEFAULT_SOCIAL: SocialLinks = {
   instagram: "",
 };
 
+/**
+ * Reads website content from the database.
+ *
+ * Never throws: if the database is unreachable (for example during a CI /
+ * Vercel build where DATABASE_URL is not configured, or a transient outage)
+ * this returns an empty map so callers fall back to the DEFAULT_* content
+ * instead of crashing the whole page.
+ */
 export async function getSettings(): Promise<Record<string, unknown>> {
-  const rows = await db.select().from(settings);
-  const map: Record<string, unknown> = {};
-  for (const row of rows) map[row.key] = row.value;
-  return map;
+  try {
+    const rows = await db.select().from(settings);
+    const map: Record<string, unknown> = {};
+    for (const row of rows) map[row.key] = row.value;
+    return map;
+  } catch (err) {
+    console.error(
+      "[content] Could not load settings from the database — using defaults:",
+      err instanceof Error ? err.message : err
+    );
+    return {};
+  }
 }
 
 export function pick<T>(map: Record<string, unknown>, key: string, fallback: T): T {

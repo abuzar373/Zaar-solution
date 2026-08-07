@@ -207,12 +207,50 @@ git push
 
 ## 8. Deploy to Vercel
 
+> ⚠️ **You must create a cloud database first.** Vercel cannot reach a database
+> running on your laptop. Create a free Postgres at
+> [neon.tech](https://neon.tech) or [supabase.com](https://supabase.com) and copy
+> its connection string (it ends with `?sslmode=require`).
+
 1. Push to GitHub (step 7)
 2. Go to [vercel.com/new](https://vercel.com/new) and import the repo
-3. Add these **Environment Variables** in the Vercel dashboard:
-   - `DATABASE_URL` — your Neon/Supabase connection string
-   - `AUTH_SECRET` — a long random string
+3. Under **Environment Variables**, add both of these **before** deploying:
+
+   | Name | Value |
+   | ---- | ----- |
+   | `DATABASE_URL` | `postgresql://user:pass@host.neon.tech/db?sslmode=require` |
+   | `AUTH_SECRET` | a long random string (`openssl rand -base64 32`) |
+
+   Apply them to **Production, Preview and Development**.
 4. Click **Deploy**
+
+### After the first deploy — create the tables
+
+The build succeeds without a database, but the site has no data until you push
+the schema. Run this **from your own machine**, pointing at the cloud database:
+
+```bash
+# macOS / Linux
+DATABASE_URL="your-cloud-url" npx drizzle-kit push
+DATABASE_URL="your-cloud-url" node scripts/seed.mjs
+```
+
+```powershell
+# Windows PowerShell
+$env:DATABASE_URL="your-cloud-url"; npx drizzle-kit push
+$env:DATABASE_URL="your-cloud-url"; node scripts/seed.mjs
+```
+
+Then visit `https://your-app.vercel.app/login`.
+
+### Vercel troubleshooting
+
+| Symptom | Cause & fix |
+| ------- | ----------- |
+| Build fails: `ECONNREFUSED 127.0.0.1:5432` | `DATABASE_URL` was not set. Add it in Project → Settings → Environment Variables, then **Redeploy**. |
+| Site loads but shows empty states everywhere | Tables/data missing — run the two commands above. |
+| Login says "Invalid email or password" | The seed step never ran against the cloud database. |
+| Uploaded images disappear | Vercel's filesystem is read-only and ephemeral — see the note below. |
 
 After the first deploy, seed the cloud database from your own machine:
 ```bash

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { testimonials } from "@/db/schema";
 import { desc, sql } from "drizzle-orm";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,19 @@ function Stars({ rating }: { rating: number }) {
 
 export default async function TestimonialsPage() {
   const [items, [{ avg }]] = await Promise.all([
-    db.select().from(testimonials).orderBy(desc(testimonials.createdAt)),
-    db.select({ avg: sql<number>`coalesce(round(avg(${testimonials.rating})::numeric, 1), 0)::float` }).from(testimonials),
+    safeQuery(
+      () => db.select().from(testimonials).orderBy(desc(testimonials.createdAt)),
+      [],
+      "testimonials:list"
+    ),
+    safeQuery(
+      () =>
+        db
+          .select({ avg: sql<number>`coalesce(round(avg(${testimonials.rating})::numeric, 1), 0)::float` })
+          .from(testimonials),
+      [{ avg: 0 }],
+      "testimonials:avg"
+    ),
   ]);
 
   return (

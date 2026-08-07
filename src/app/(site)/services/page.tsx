@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { services } from "@/db/schema";
 import { asc } from "drizzle-orm";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage() {
-  const items = await db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id));
+  const items = await safeQuery(
+    () => db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id)),
+    [],
+    "services:list"
+  );
 
   return (
     <div className="pt-28 pb-24">

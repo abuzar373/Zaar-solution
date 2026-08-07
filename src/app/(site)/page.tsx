@@ -10,6 +10,7 @@ import {
   type HeroContent,
   type StatsContent,
 } from "@/lib/content";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +27,14 @@ function Stars({ rating }: { rating: number }) {
 export default async function HomePage() {
   const [settingsMap, featured, recent, serviceList, reviews] = await Promise.all([
     getSettings(),
-    db.select().from(projects).where(eq(projects.featured, true)).orderBy(desc(projects.createdAt)).limit(3),
-    db.select().from(projects).orderBy(desc(projects.createdAt)).limit(6),
-    db.select().from(services).orderBy(asc(services.sortOrder)).limit(6),
-    db.select().from(testimonials).orderBy(desc(testimonials.createdAt)).limit(3),
+    safeQuery(
+      () => db.select().from(projects).where(eq(projects.featured, true)).orderBy(desc(projects.createdAt)).limit(3),
+      [],
+      "home:featured"
+    ),
+    safeQuery(() => db.select().from(projects).orderBy(desc(projects.createdAt)).limit(6), [], "home:recent"),
+    safeQuery(() => db.select().from(services).orderBy(asc(services.sortOrder)).limit(6), [], "home:services"),
+    safeQuery(() => db.select().from(testimonials).orderBy(desc(testimonials.createdAt)).limit(3), [], "home:reviews"),
   ]);
 
   const hero = pick<HeroContent>(settingsMap, "hero", DEFAULT_HERO);
