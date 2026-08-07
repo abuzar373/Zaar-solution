@@ -1,10 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("admin@abuzarsoftware.com");
   const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
@@ -21,8 +19,8 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Login failed");
-      router.push("/admin");
-      router.refresh();
+      // Use window.location.href to perform a hard redirect ensuring cookies are sent cleanly
+      window.location.href = "/admin";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
       setLoading(false);
@@ -57,9 +55,9 @@ export default function LoginPage() {
             type="button"
             disabled={loading}
             onClick={() => doLogin("admin@abuzarsoftware.com", "admin123")}
-            className="mt-2 w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-60"
+            className="mt-2 w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-60 cursor-pointer"
           >
-            ⚡ One-Click Login as Admin
+            {loading ? "Logging in..." : "⚡ One-Click Login as Admin"}
           </button>
         </div>
 
@@ -93,7 +91,7 @@ export default function LoginPage() {
           </div>
           <button
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60"
+            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60 cursor-pointer"
           >
             {loading ? "Authenticating…" : "Sign In to Admin Dashboard"}
           </button>
