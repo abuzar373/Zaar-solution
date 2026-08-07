@@ -16,9 +16,21 @@ type Params = { params: Promise<{ name: string }> };
 export async function GET(_req: NextRequest, { params }: Params) {
   const { name } = await params;
   const safe = path.basename(name); // prevent path traversal
-  const filePath = path.join(process.cwd(), "uploads", safe);
+
+  const primaryPath = path.join(process.cwd(), "uploads", safe);
+  const tmpPath = path.join("/tmp", "uploads", safe);
+
   try {
-    const data = await readFile(filePath);
+    let data: Buffer;
+    let filePath = primaryPath;
+
+    try {
+      data = await readFile(primaryPath);
+    } catch {
+      data = await readFile(tmpPath);
+      filePath = tmpPath;
+    }
+
     const ext = path.extname(filePath).toLowerCase();
     return new NextResponse(new Uint8Array(data), {
       headers: {

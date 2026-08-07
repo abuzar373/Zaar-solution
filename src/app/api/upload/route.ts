@@ -70,5 +70,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ url: `/api/uploads/${name}` }, { status: 201 });
+  try {
+    // Try primary uploads folder first
+    const primaryDir = path.join(process.cwd(), "uploads");
+    await mkdir(primaryDir, { recursive: true });
+    await writeFile(path.join(primaryDir, name), buffer);
+    return NextResponse.json({ url: `/api/uploads/${name}` }, { status: 201 });
+  } catch {
+    try {
+      // Fallback to /tmp for Vercel / serverless environments
+      const tmpDir = path.join("/tmp", "uploads");
+      await mkdir(tmpDir, { recursive: true });
+      await writeFile(path.join(tmpDir, name), buffer);
+      return NextResponse.json({ url: `/api/uploads/${name}` }, { status: 201 });
+    } catch {
+      // Fallback to inline Data URI if disk write is completely disabled
+      const base64 = buffer.toString("base64");
+      const dataUrl = `data:${file.type};base64,${base64}`;
+      return NextResponse.json({ url: dataUrl }, { status: 201 });
+    }
+  }
 }
