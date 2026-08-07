@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { AUTH_COOKIE, signToken } from "@/lib/auth";
+import { AUTH_COOKIE, signToken, sessionCookieOptions } from "@/lib/auth";
 import { bootstrapDatabase } from "@/lib/bootstrap";
 
 export const dynamic = "force-dynamic";
@@ -55,13 +55,7 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
     });
-    res.cookies.set(AUTH_COOKIE, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      secure: process.env.NODE_ENV === "production",
-    });
+    res.cookies.set(AUTH_COOKIE, token, sessionCookieOptions(req));
     return res;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

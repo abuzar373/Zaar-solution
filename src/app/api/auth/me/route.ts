@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { getSession } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
+import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 

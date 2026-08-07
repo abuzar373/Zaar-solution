@@ -37,6 +37,46 @@ export function verifyToken(token: string | undefined | null): { uid: number; em
   }
 }
 
+/**
+ * Builds the session cookie options.
+ *
+ * The `Secure` flag must reflect how the site is ACTUALLY being served, not
+ * NODE_ENV. A production build served over plain HTTP (a LAN IP, a custom
+ * host, or `npm run start` on http://…) would set Secure=true, and the browser
+ * then silently discards the cookie — login returns 200 but /admin bounces
+ * straight back to /login.
+ *
+ * So detect the real protocol from the proxy headers instead.
+ */
+export function sessionCookieOptions(req?: { headers: Headers }) {
+  let isHttps = false;
+
+  if (req) {
+    const proto =
+      req.headers.get("x-forwarded-proto") ??
+      req.headers.get("x-forwarded-protocol") ??
+      "";
+    if (proto.split(",")[0].trim() === "https") isHttps = true;
+
+    // Vercel and most managed hosts always terminate TLS.
+    if (!isHttps && req.headers.get("x-vercel-id")) isHttps = true;
+
+    if (!isHttps) {
+      const origin = req.headers.get("origin") ?? req.headers.get("referer") ?? "";
+      if (origin.startsWith("https://")) isHttps = true;
+    }
+  }
+
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+    // Only mark Secure when the connection really is HTTPS.
+    secure: isHttps,
+  };
+}
+
 export async function getSession() {
   const store = await cookies();
   return verifyToken(store.get(AUTH_COOKIE)?.value);

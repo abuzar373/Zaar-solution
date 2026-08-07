@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { requireAdmin, signToken, AUTH_COOKIE } from "@/lib/auth";
+import { requireAdmin, signToken, AUTH_COOKIE, sessionCookieOptions } from "@/lib/auth";
 import { eq, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -74,12 +74,10 @@ export async function PUT(req: NextRequest) {
 
   // The session token embeds the email, so re-issue it after a change.
   const res = NextResponse.json({ item: updated });
-  res.cookies.set(AUTH_COOKIE, signToken({ uid: updated.id, email: updated.email }), {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-    secure: process.env.NODE_ENV === "production",
-  });
+  res.cookies.set(
+    AUTH_COOKIE,
+    signToken({ uid: updated.id, email: updated.email }),
+    sessionCookieOptions(req)
+  );
   return res;
 }
