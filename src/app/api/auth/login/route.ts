@@ -5,6 +5,7 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AUTH_COOKIE, signToken } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { provisionAdminIfConfigured } from "@/lib/admin-bootstrap";
 
 // naive in-memory rate limiter (per instance)
 const attempts = new Map<string, { count: number; reset: number }>();
@@ -41,11 +42,19 @@ export async function POST(req: NextRequest) {
   let user;
   try {
     [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    // First successful login creates the configured admin if the seed script
+    // has not yet been run against the Supabase project.
+    if (!user) user = await provisionAdminIfConfigured(email, password);
   } catch (error) {
     return databaseError("log in", error);
   }
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    return NextResponse.json(
+      {
+        error: "Invalid email or password. Use the configured ADMIN_EMAIL and ADMIN_PASSWORD, or run scripts/seed.sql in Supabase.",
+      },
+      { status: 401 }
+    );
   }
 
   const token = signToken({ uid: user.id, email: user.email });

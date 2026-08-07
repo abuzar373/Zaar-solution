@@ -199,6 +199,9 @@ Set these values in `.env`:
 ```env
 DATABASE_URL=postgresql://postgres.PROJECT_REF:DB_PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres?pgbouncer=true
 AUTH_SECRET=use-a-long-random-secret
+ADMIN_NAME=Abuzar Ahmed
+ADMIN_EMAIL=admin@abuzarsoftware.com
+ADMIN_PASSWORD=use-a-strong-admin-password
 NEXT_PUBLIC_SUPABASE_URL=https://PROJECT_REF.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_STORAGE_BUCKET=uploads
@@ -217,8 +220,21 @@ The seed creates the demo admin:
 - Email: `admin@abuzarsoftware.com`
 - Password: `admin123`
 
+If you do not run the seed, the first login using `ADMIN_EMAIL` and `ADMIN_PASSWORD` automatically provisions the admin user after the `users` table exists.
+
 ### 4. Configure Vercel
-In **Vercel → Project → Settings → Environment Variables**, add the same five variables above for **Production, Preview, and Development**. Then redeploy from the `main` branch.
+In **Vercel → Project → Settings → Environment Variables**, add these variables for **Production, Preview, and Development**:
+
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `ADMIN_NAME`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_STORAGE_BUCKET`
+
+Then redeploy from the `main` branch. After the first deployment, log in at `/login` with the configured admin credentials. If the tables exist, the admin account is created automatically on that first login.
 
 After deployment, open:
 
