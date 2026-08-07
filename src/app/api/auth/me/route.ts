@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { getSession } from "@/lib/auth";
-import { databaseError } from "@/lib/api-error";
-import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/lib/auth";
+import { apiError } from "@/lib/apiError";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +19,6 @@ export async function GET() {
       { headers: NO_STORE }
     );
   } catch (err) {
-    console.error("auth/me failed:", err);
-    return NextResponse.json(
-      { user: null, error: "Server error while checking your session." },
-      { status: 500, headers: NO_STORE }
-    );
+    return apiError(err, "GET /api/auth/me");
   }
 }
