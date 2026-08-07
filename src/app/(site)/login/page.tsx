@@ -78,7 +78,7 @@ export default function LoginPage() {
           </div>
           <button
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60"
+            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60 cursor-pointer"
           >
             {loading ? "Signing in…" : "Sign In"}
           </button>
