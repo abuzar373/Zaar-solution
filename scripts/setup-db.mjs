@@ -16,14 +16,14 @@ import pg from "pg";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const DATABASE_URL =
-  process.argv[2] ??
-  envOr("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5432/app_db");
-
 const envOr = (k, d) => {
   const v = process.env[k];
   return typeof v === "string" && v.trim() ? v.trim() : d;
 };
+
+const DATABASE_URL =
+  process.argv[2] ??
+  envOr("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5432/app_db");
 
 const ADMIN_NAME = envOr("ADMIN_NAME", "Abuzar Ahmed");
 const ADMIN_EMAIL = envOr("ADMIN_EMAIL", "admin@abuzarsoftware.com").toLowerCase();

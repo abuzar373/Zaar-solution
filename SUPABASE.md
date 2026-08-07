@@ -40,12 +40,12 @@ If the password contains `@ : / ?` or `#`, [URL-encode it](https://www.urlencode
 Run this **once from your own computer**, using the **5432** URL:
 
 ```bash
-node scripts/setup-db.mjs "postgresql://postgres.xxxx:PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
+npm run setup "postgresql://postgres.xxxx:PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
 ```
 
 ```powershell
 # Windows PowerShell — same command, quotes required
-node scripts/setup-db.mjs "postgresql://postgres.xxxx:PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
+npm run setup "postgresql://postgres.xxxx:PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
 ```
 
 Expected output:

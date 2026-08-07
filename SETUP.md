@@ -103,9 +103,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ## 5. Create the tables and load demo data
 
 ```bash
-npx drizzle-kit push     # creates all 7 tables from src/db/schema.ts
-node scripts/seed.mjs    # loads demo projects, services, testimonials + admin user
+npm run setup
 ```
+
+This single command creates all 7 tables and loads the demo data and admin
+user. (Equivalent to `npm run db:push` followed by `npm run db:seed`.)
 
 You should see:
 
@@ -231,14 +233,12 @@ the schema. Run this **from your own machine**, pointing at the cloud database:
 
 ```bash
 # macOS / Linux
-DATABASE_URL="your-cloud-url" npx drizzle-kit push
-DATABASE_URL="your-cloud-url" node scripts/seed.mjs
+npm run setup "your-cloud-url"
 ```
 
 ```powershell
 # Windows PowerShell
-$env:DATABASE_URL="your-cloud-url"; npx drizzle-kit push
-$env:DATABASE_URL="your-cloud-url"; node scripts/seed.mjs
+npm run setup "your-cloud-url"
 ```
 
 Then visit `https://your-app.vercel.app/login`.
@@ -306,14 +306,18 @@ DATABASE_URL="your-cloud-url" node scripts/seed.mjs
 ## Useful commands
 
 ```bash
-npm run dev              # Development server
-npm run build            # Production build
-npm run start            # Run the production build
-npm run lint             # ESLint
-npm run typecheck        # TypeScript check
-npx drizzle-kit push     # Apply schema changes to the database
-npx drizzle-kit studio   # Visual database browser
-node scripts/seed.mjs    # Re-seed demo data
+npm run dev          # Development server
+npm run build        # Production build
+npm run start        # Run the production build
+npm run lint         # ESLint
+npm run typecheck    # TypeScript check
+
+npm run setup        # Create tables + seed demo data (one command)
+npm run db:push      # Apply schema changes to the database
+npm run db:seed      # Re-seed demo data
+npm run db:studio    # Visual database browser
+npm run db:reset     # Force-sync schema, then re-seed
+
 docker compose up -d     # Start Postgres
 docker compose down -v   # Stop Postgres and delete its data
 ```

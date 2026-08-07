@@ -1,12 +1,22 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "abuzar-software-solutions",
+  "version": "1.0.0",
   "private": true,
+  "description": "Abuzar Software Solutions — full stack software house website with admin dashboard (Next.js, PostgreSQL, Drizzle ORM).",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "setup": "node scripts/setup-db.mjs",
+    "db:push": "drizzle-kit push",
+    "db:seed": "node scripts/seed.mjs",
+    "db:studio": "drizzle-kit studio",
+    "db:reset": "drizzle-kit push --force && node scripts/seed.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.2",

@@ -13,13 +13,11 @@ git clone https://github.com/YOUR-USERNAME/abuzar-software-solutions.git
 cd abuzar-software-solutions
 
 npm install
-docker compose up -d          # starts PostgreSQL (or use your own)
-cp .env.example .env          # then set AUTH_SECRET
+docker compose up -d     # starts PostgreSQL (or use your own)
+cp .env.example .env     # then set AUTH_SECRET
 
-npx drizzle-kit push          # create the tables
-node scripts/seed.mjs         # load demo data + admin user
-
-npm run dev                   # → http://localhost:3000
+npm run setup            # creates all tables + demo data + admin user
+npm run dev              # → http://localhost:3000
 ```
 
 **Admin login:** `admin@abuzarsoftware.com` / `admin123` → [http://localhost:3000/admin](http://localhost:3000/admin)
