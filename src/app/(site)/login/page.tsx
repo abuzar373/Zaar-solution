@@ -9,10 +9,37 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [next, setNext] = useState("/admin");
 
-  // Read ?next= from the URL without useSearchParams (avoids a Suspense boundary).
+  /**
+   * On mount:
+   *  - if an existing session is valid, go straight to the dashboard
+   *  - if the cookie is stale/invalid, clear it so the guard can't bounce
+   *    the user back and forth between /admin and /login
+   */
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get("next");
     if (param && param.startsWith("/admin")) setNext(param);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        if (cancelled) return;
+        if (res.ok) {
+          window.location.href = param?.startsWith("/admin") ? param : "/admin";
+        } else if (res.status === 401) {
+          // Remove the stale cookie (e.g. after AUTH_SECRET changed).
+          await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        }
+      } catch {
+        /* offline — just show the form */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const onSubmit = async (e: FormEvent) => {
@@ -26,10 +53,25 @@ export default function LoginPage() {
         credentials: "same-origin",
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? `Login failed (${res.status})`);
-      // Hard navigation guarantees the new session cookie is used for the
-      // very next request (and re-runs the middleware guard cleanly).
+
+      const text = await res.text();
+      let data: { error?: string } = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+
+      if (!res.ok) {
+        throw new Error(
+          data.error ??
+            (res.status >= 500
+              ? "Server error. Check that the database is reachable."
+              : `Login failed (${res.status})`)
+        );
+      }
+
+      // Hard navigation so the new cookie is used for the very next request.
       window.location.href = next;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -49,9 +91,17 @@ export default function LoginPage() {
             A
           </span>
           <h1 className="mt-5 text-2xl font-bold text-slate-900 dark:text-white">Admin Login</h1>
-          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Sign in to manage Abuzar Software Solutions</p>
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            Sign in to manage Abuzar Software Solutions
+          </p>
         </div>
-        {error && <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500">{error}</div>}
+
+        {error && (
+          <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium">Email</label>
@@ -78,11 +128,12 @@ export default function LoginPage() {
           </div>
           <button
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60 cursor-pointer"
+            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60"
           >
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
+
         <div className="mt-6 rounded-xl border border-indigo-500/25 bg-indigo-500/5 px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
           <span className="font-semibold text-indigo-500">Demo credentials</span>
           <br />
