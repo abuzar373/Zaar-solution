@@ -35,11 +35,17 @@ export default function AdminServices() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/services");
-    const data = await res.json();
-    setItems(data.items ?? []);
-    setLoading(false);
-  }, []);
+    try {
+      const res = await fetch("/api/services");
+      const data = await res.json();
+      setItems(data.items ?? []);
+    } catch {
+      setItems([]);
+      toast("Could not load services", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 

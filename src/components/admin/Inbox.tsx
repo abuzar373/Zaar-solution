@@ -58,14 +58,20 @@ export default function Inbox({
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10", status });
     if (q.trim()) params.set("q", q.trim());
-    const res = await fetch(`${endpoint}?${params}`);
-    const data = await res.json();
-    setItems(data.items ?? []);
-    setPages(data.pages ?? 1);
-    setTotal(data.total ?? 0);
-    setSelected(new Set());
-    setLoading(false);
-  }, [endpoint, page, q, status]);
+    try {
+      const res = await fetch(`${endpoint}?${params}`);
+      const data = await res.json();
+      setItems(data.items ?? []);
+      setPages(data.pages ?? 1);
+      setTotal(data.total ?? 0);
+      setSelected(new Set());
+    } catch {
+      setItems([]);
+      toast("Could not load submissions", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [endpoint, page, q, status, toast]);
 
   useEffect(() => {
     const t = setTimeout(load, q ? 300 : 0);

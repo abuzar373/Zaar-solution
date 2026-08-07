@@ -34,12 +34,18 @@ export default function AdminUsers() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/users");
-    const data = await res.json();
-    setItems(data.items ?? []);
-    setCurrentUserId(data.currentUserId ?? null);
-    setLoading(false);
-  }, []);
+    try {
+      const res = await fetch("/api/users");
+      const data = await res.json();
+      setItems(data.items ?? []);
+      setCurrentUserId(data.currentUserId ?? null);
+    } catch {
+      setItems([]);
+      toast("Could not load users", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => { load(); }, [load]);
 

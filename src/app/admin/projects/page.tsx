@@ -47,12 +47,18 @@ export default function AdminProjects() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "8", sort });
     if (q.trim()) params.set("q", q.trim());
-    const res = await fetch(`/api/projects?${params}`);
-    const data = await res.json();
-    setItems(data.items ?? []);
-    setPages(data.pages ?? 1);
-    setLoading(false);
-  }, [page, q, sort]);
+    try {
+      const res = await fetch(`/api/projects?${params}`);
+      const data = await res.json();
+      setItems(data.items ?? []);
+      setPages(data.pages ?? 1);
+    } catch {
+      setItems([]);
+      toast("Could not load projects", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, q, sort, toast]);
 
   useEffect(() => {
     const t = setTimeout(load, q ? 300 : 0);

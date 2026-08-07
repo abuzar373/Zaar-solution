@@ -41,12 +41,18 @@ export default function AdminTestimonials() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "9" });
     if (q.trim()) params.set("q", q.trim());
-    const res = await fetch(`/api/testimonials?${params}`);
-    const data = await res.json();
-    setItems(data.items ?? []);
-    setPages(data.pages ?? 1);
-    setLoading(false);
-  }, [page, q]);
+    try {
+      const res = await fetch(`/api/testimonials?${params}`);
+      const data = await res.json();
+      setItems(data.items ?? []);
+      setPages(data.pages ?? 1);
+    } catch {
+      setItems([]);
+      toast("Could not load testimonials", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, q, toast]);
 
   useEffect(() => {
     const t = setTimeout(load, q ? 300 : 0);

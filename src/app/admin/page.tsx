@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Spinner, cardCls } from "@/components/admin/ui";
 
 type Stats = {
@@ -47,13 +47,38 @@ function BarChart({ data, color }: { data: { month: string; count: number }[]; c
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/stats")
-      .then((r) => r.json())
-      .then(setStats)
-      .catch(() => {});
+  const load = useCallback(async () => {
+    setFailed(false);
+    try {
+      const res = await fetch("/api/stats");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStats(await res.json());
+    } catch {
+      setFailed(true);
+    }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (failed) {
+    return (
+      <div className={`${cardCls} mx-auto max-w-md p-9 text-center`}>
+        <div className="text-4xl">⚠️</div>
+        <h1 className="mt-4 font-bold text-slate-900 dark:text-white">Couldn&apos;t load dashboard</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          The statistics could not be fetched. Check that the database is reachable.
+        </p>
+        <button
+          onClick={load}
+          className="mt-6 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!stats) return <Spinner />;
 

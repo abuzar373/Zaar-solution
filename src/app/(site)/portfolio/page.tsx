@@ -23,17 +23,26 @@ export default function PortfolioPage() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "9" });
     if (q.trim()) params.set("q", q.trim());
     if (category !== "All") params.set("category", category);
-    const res = await fetch(`/api/projects?${params}`);
-    const data = await res.json();
-    setItems(data.items ?? []);
-    setPages(data.pages ?? 1);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/projects?${params}`);
+      const data = await res.json();
+      setItems(data.items ?? []);
+      setPages(data.pages ?? 1);
+      setFailed(false);
+    } catch {
+      setItems([]);
+      setPages(1);
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, [page, q, category]);
 
   useEffect(() => {
@@ -80,6 +89,20 @@ export default function PortfolioPage() {
         {loading ? (
           <div className="mt-24 flex justify-center">
             <div className="spinner h-12 w-12" />
+          </div>
+        ) : failed ? (
+          <div className="mt-24 text-center text-slate-500">
+            <div className="text-5xl">⚠️</div>
+            <p className="mt-4 font-medium text-slate-700 dark:text-slate-300">
+              Couldn&apos;t load projects
+            </p>
+            <p className="text-sm">Please check your connection and try again.</p>
+            <button
+              onClick={load}
+              className="mt-5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Retry
+            </button>
           </div>
         ) : items.length === 0 ? (
           <div className="mt-24 text-center text-slate-500">

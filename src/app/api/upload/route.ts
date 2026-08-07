@@ -4,6 +4,9 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"]);
 const EXT: Record<string, string> = {
   "image/jpeg": ".jpg",
@@ -38,8 +41,34 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${EXT[file.type]}`;
   const dir = path.join(process.cwd(), "uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), buffer);
+
+  try {
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, name), buffer);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    console.error("[upload] write failed:", code, err instanceof Error ? err.message : err);
+
+    // Serverless hosts (Vercel, Netlify, Lambda) have a read-only filesystem.
+    if (code === "EROFS" || code === "EACCES" || code === "EPERM") {
+      return NextResponse.json(
+        {
+          error:
+            "This host has a read-only filesystem, so file uploads are disabled. Paste a direct image URL in the field instead.",
+        },
+        { status: 501 }
+      );
+    }
+
+    if (code === "ENOSPC") {
+      return NextResponse.json({ error: "The server has run out of disk space." }, { status: 507 });
+    }
+
+    return NextResponse.json(
+      { error: "Could not save the image. Please try again or paste an image URL instead." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ url: `/api/uploads/${name}` }, { status: 201 });
 }
