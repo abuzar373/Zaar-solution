@@ -3,15 +3,13 @@ import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { apiError } from "@/lib/apiError";
+import { ensureSchema } from "@/lib/bootstrap";
 
 export async function GET() {
   try {
-    await ensureDatabaseSchema();
-  } catch (error) {
-    return databaseError("connect to load website settings", error);
-  }
+    // Make sure the tables exist (fresh Supabase project support).
+    await ensureSchema();
 
-  try {
     const rows = await db.select().from(settings);
     const map: Record<string, unknown> = {};
     for (const row of rows) map[row.key] = row.value;
