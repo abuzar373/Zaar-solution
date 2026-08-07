@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { apiError } from "@/lib/apiError";
 

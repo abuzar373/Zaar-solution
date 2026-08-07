@@ -3,10 +3,17 @@ import { db } from "@/db";
 import { services } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 import { asc } from "drizzle-orm";
 import { apiError } from "@/lib/apiError";
 
 export async function GET() {
+  try {
+    await ensureDatabaseSchema();
+  } catch (error) {
+    return databaseError("connect to load services", error);
+  }
+
   try {
     const items = await db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id));
     return NextResponse.json({ items });

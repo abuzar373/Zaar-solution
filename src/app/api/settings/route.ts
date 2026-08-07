@@ -6,6 +6,12 @@ import { apiError } from "@/lib/apiError";
 
 export async function GET() {
   try {
+    await ensureDatabaseSchema();
+  } catch (error) {
+    return databaseError("connect to load website settings", error);
+  }
+
+  try {
     const rows = await db.select().from(settings);
     const map: Record<string, unknown> = {};
     for (const row of rows) map[row.key] = row.value;
