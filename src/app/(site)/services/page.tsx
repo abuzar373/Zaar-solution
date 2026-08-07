@@ -13,7 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage() {
-  const items = await db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id));
+  let items: (typeof services.$inferSelect)[] = [];
+  try {
+    items = await db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id));
+  } catch (error) {
+    console.warn("Could not load services from database:", error);
+  }
 
   return (
     <div className="pt-28 pb-24">

@@ -24,13 +24,28 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export default async function HomePage() {
-  const [settingsMap, featured, recent, serviceList, reviews] = await Promise.all([
-    getSettings(),
-    db.select().from(projects).where(eq(projects.featured, true)).orderBy(desc(projects.createdAt)).limit(3),
-    db.select().from(projects).orderBy(desc(projects.createdAt)).limit(6),
-    db.select().from(services).orderBy(asc(services.sortOrder)).limit(6),
-    db.select().from(testimonials).orderBy(desc(testimonials.createdAt)).limit(3),
-  ]);
+  let settingsMap: Record<string, unknown> = {};
+  let featured: (typeof projects.$inferSelect)[] = [];
+  let recent: (typeof projects.$inferSelect)[] = [];
+  let serviceList: (typeof services.$inferSelect)[] = [];
+  let reviews: (typeof testimonials.$inferSelect)[] = [];
+
+  try {
+    const res = await Promise.all([
+      getSettings(),
+      db.select().from(projects).where(eq(projects.featured, true)).orderBy(desc(projects.createdAt)).limit(3),
+      db.select().from(projects).orderBy(desc(projects.createdAt)).limit(6),
+      db.select().from(services).orderBy(asc(services.sortOrder)).limit(6),
+      db.select().from(testimonials).orderBy(desc(testimonials.createdAt)).limit(3),
+    ]);
+    settingsMap = res[0];
+    featured = res[1];
+    recent = res[2];
+    serviceList = res[3];
+    reviews = res[4];
+  } catch (error) {
+    console.warn("Error fetching homepage data from DB:", error);
+  }
 
   const hero = pick<HeroContent>(settingsMap, "hero", DEFAULT_HERO);
   const stats = pick<StatsContent>(settingsMap, "stats", DEFAULT_STATS);

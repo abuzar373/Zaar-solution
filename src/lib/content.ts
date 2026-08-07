@@ -68,10 +68,15 @@ export const DEFAULT_CONTACT: ContactInfo = {
 };
 
 export async function getSettings(): Promise<Record<string, unknown>> {
-  const rows = await db.select().from(settings);
-  const map: Record<string, unknown> = {};
-  for (const row of rows) map[row.key] = row.value;
-  return map;
+  try {
+    const rows = await db.select().from(settings);
+    const map: Record<string, unknown> = {};
+    for (const row of rows) map[row.key] = row.value;
+    return map;
+  } catch (error) {
+    console.warn("[getSettings] Database unavailable or empty settings table, returning defaults.");
+    return {};
+  }
 }
 
 export function pick<T>(map: Record<string, unknown>, key: string, fallback: T): T {
