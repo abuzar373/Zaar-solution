@@ -16,7 +16,6 @@ const EXT: Record<string, string> = {
   "image/gif": ".gif",
   "image/svg+xml": ".svg",
 };
-export const runtime = "nodejs";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
