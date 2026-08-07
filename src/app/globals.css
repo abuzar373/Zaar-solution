@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #f8fafc;
+  --fg: #0f172a;
+}
+
+.dark {
+  --bg: #070b16;
+  --fg: #e2e8f0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-feature-settings: "ss01";
+}
+
+/* Glassmorphism helpers */
+.glass {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Animated gradient blob background */
+@keyframes floatBlob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -50px) scale(1.1); }
+  66% { transform: translate(-30px, 30px) scale(0.95); }
+}
+.blob {
+  animation: floatBlob 14s ease-in-out infinite;
+  filter: blur(80px);
+}
+.blob-slow { animation-duration: 22s; }
+
+/* Reveal animation */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.rise-1 { animation-delay: 0.08s; }
+.rise-2 { animation-delay: 0.16s; }
+.rise-3 { animation-delay: 0.24s; }
+.rise-4 { animation-delay: 0.32s; }
+
+/* Toast animation */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-in { animation: toastIn 0.25s ease-out both; }
+
+/* Spinner */
+@keyframes spin360 { to { transform: rotate(360deg); } }
+.spinner {
+  border: 3px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 9999px;
+  animation: spin360 0.8s linear infinite;
+}
+
+/* Bar chart grow */
+@keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.bar-grow { transform-origin: bottom; animation: growUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+::selection { background: #6366f1; color: white; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.4); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }

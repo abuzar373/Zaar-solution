@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
+import crypto from "crypto";
+
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"]);
+const EXT: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/svg+xml": ".svg",
+};
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+export async function POST(req: NextRequest) {
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const formData = await req.formData().catch(() => null);
+  if (!formData) return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+  if (!ALLOWED.has(file.type)) {
+    return NextResponse.json(
+      { error: "Only JPG, PNG, WEBP, GIF and SVG images are allowed" },
+      { status: 400 }
+    );
+  }
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: "File must be smaller than 5MB" }, { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${EXT[file.type]}`;
+  const dir = path.join(process.cwd(), "uploads");
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, name), buffer);
+
+  return NextResponse.json({ url: `/api/uploads/${name}` }, { status: 201 });
+}
