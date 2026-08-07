@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 const SERVICES = [
   "Website Development",
@@ -18,11 +18,30 @@ const BUDGETS = ["Under $1,000", "$1,000 – $5,000", "$5,000 – $10,000", "$10
 
 const initial = { fullName: "", email: "", phone: "", company: "", service: "", budget: "", message: "" };
 
+const defaultContact = {
+  email: "hello@abuzarsoftware.com",
+  phone: "+92 300 1234567",
+  address: "Suite 402, Tech Tower, Lahore, Pakistan",
+  hours: "Mon – Sat, 9:00 AM – 7:00 PM",
+};
+
 export default function ContactPage() {
   const [form, setForm] = useState(initial);
+  const [contact, setContact] = useState(defaultContact);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.settings?.contactInfo) {
+          setContact((prev) => ({ ...prev, ...d.settings.contactInfo }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const set = (key: keyof typeof initial) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -67,10 +86,10 @@ export default function ContactPage() {
         <div className="mt-14 grid gap-8 lg:grid-cols-3">
           <div className="space-y-4">
             {[
-              { icon: "📧", label: "Email", value: "hello@abuzarsoftware.com" },
-              { icon: "📱", label: "Phone", value: "+92 300 1234567" },
-              { icon: "📍", label: "Office", value: "Suite 402, Tech Tower, Lahore, Pakistan" },
-              { icon: "🕘", label: "Hours", value: "Mon – Sat, 9:00 AM – 7:00 PM" },
+              { icon: "📧", label: "Email", value: contact.email },
+              { icon: "📱", label: "Phone", value: contact.phone },
+              { icon: "📍", label: "Office", value: contact.address },
+              { icon: "🕘", label: "Hours", value: contact.hours },
             ].map((c) => (
               <div key={c.label} className="glass flex items-start gap-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-white/60 dark:bg-white/5 p-5">
                 <span className="text-2xl">{c.icon}</span>
@@ -135,7 +154,7 @@ export default function ContactPage() {
                 </div>
                 <button
                   disabled={loading}
-                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
                 >
                   {loading ? "Sending…" : "Send Message"}
                 </button>
