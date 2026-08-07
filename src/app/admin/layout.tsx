@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ToastProvider } from "@/components/admin/ui";
+import { parseApiResponse } from "@/lib/api-client";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
@@ -21,18 +22,31 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [checking, setChecking] = useState(true);
+  const [connectionError, setConnectionError] = useState("");
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(true);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
     fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        setUser(d.user);
+      .then(async (response) => {
+        const data = await parseApiResponse<{ user?: { name: string; email: string }; error?: string }>(response);
+        if (response.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        if (!response.ok) {
+          setConnectionError(data.error ?? "Unable to verify the admin session.");
+          setChecking(false);
+          return;
+        }
+        setUser(data.user ?? null);
         setChecking(false);
       })
-      .catch(() => router.replace("/login"));
+      .catch(() => {
+        setConnectionError("Admin API is unavailable. Check your Vercel deployment and Supabase environment variables.");
+        setChecking(false);
+      });
   }, [router]);
 
   useEffect(() => setOpen(false), [pathname]);
@@ -55,6 +69,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="text-center">
           <div className="spinner mx-auto h-12 w-12" />
           <p className="mt-4 text-sm font-medium text-slate-400">Loading Admin Control Panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (connectionError) {
+    return (
+      <div className="relative grid min-h-screen place-items-center overflow-hidden bg-[#070b16] px-4 text-white">
+        <div className="blob absolute -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-500/20" />
+        <div className="relative w-full max-w-xl rounded-3xl border border-amber-500/30 bg-white/[0.06] p-8 text-center shadow-2xl backdrop-blur-xl">
+          <div className="text-5xl">⚠️</div>
+          <h1 className="mt-5 text-2xl font-bold">Admin connection problem</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-300">{connectionError}</p>
+          <div className="mt-6 rounded-2xl bg-black/20 p-5 text-left text-sm leading-7 text-slate-300">
+            <p>1. Supabase SQL Editor میں <strong>supabase-setup.sql</strong> run کریں۔</p>
+            <p>2. پھر <strong>scripts/seed.sql</strong> run کریں۔</p>
+            <p>3. Vercel میں <strong>DATABASE_URL</strong> اور <strong>AUTH_SECRET</strong> add کریں۔</p>
+            <p>4. <strong>/api/health</strong> کھول کر database connected verify کریں۔</p>
+          </div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button onClick={() => window.location.reload()} className="rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-semibold hover:bg-indigo-400">Retry Connection</button>
+            <button onClick={() => router.replace("/login")} className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold hover:bg-white/10">Back to Login</button>
+          </div>
         </div>
       </div>
     );
