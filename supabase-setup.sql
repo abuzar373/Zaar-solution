@@ -1,0 +1,9 @@
+-- Run this file in Supabase Dashboard > SQL Editor after connecting the project.
+-- The application uses Drizzle-compatible PostgreSQL tables.
+-- The canonical table definitions are in src/db/schema.ts.
+-- Recommended workflow from your local machine:
+--   npx drizzle-kit push
+--   psql "$DATABASE_URL" -f scripts/seed.sql
+--
+-- This file intentionally remains a pointer rather than duplicating the schema.
+-- Drizzle push applies the current schema and avoids drift between code and database.

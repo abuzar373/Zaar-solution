@@ -45,7 +45,12 @@ export async function getSession() {
 export async function requireAdmin() {
   const session = await getSession();
   if (!session) return null;
-  const [user] = await db.select().from(users).where(eq(users.id, session.uid)).limit(1);
-  if (!user || user.role !== "admin") return null;
-  return user;
+  try {
+    const [user] = await db.select().from(users).where(eq(users.id, session.uid)).limit(1);
+    if (!user || user.role !== "admin") return null;
+    return user;
+  } catch (error) {
+    console.error("[auth] Unable to verify admin against database", error);
+    return null;
+  }
 }

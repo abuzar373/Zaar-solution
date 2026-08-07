@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts, projects, quotes, services, testimonials } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
 import { desc, eq, sql } from "drizzle-orm";
 import { apiError } from "@/lib/apiError";
 

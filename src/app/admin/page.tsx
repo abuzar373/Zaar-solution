@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Spinner, cardCls } from "@/components/admin/ui";
+import { parseApiResponse } from "@/lib/api-client";
 
 type Stats = {
   counts: {
