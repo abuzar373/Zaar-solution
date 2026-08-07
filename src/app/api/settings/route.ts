@@ -3,8 +3,15 @@ import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 
 export async function GET() {
+  try {
+    await ensureDatabaseSchema();
+  } catch (error) {
+    return databaseError("connect to load website settings", error);
+  }
+
   try {
     const rows = await db.select().from(settings);
     const map: Record<string, unknown> = {};

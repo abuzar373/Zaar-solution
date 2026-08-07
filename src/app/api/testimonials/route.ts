@@ -3,9 +3,16 @@ import { db } from "@/db";
 import { testimonials } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 import { and, desc, ilike, or, sql, type SQL } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
+  try {
+    await ensureDatabaseSchema();
+  } catch (error) {
+    return databaseError("connect to load testimonials", error);
+  }
+
   const sp = req.nextUrl.searchParams;
   const q = sp.get("q")?.trim();
   const page = Math.max(1, Number(sp.get("page")) || 1);

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 
 const SECRET = process.env.AUTH_SECRET || "abuzar-software-solutions-secret-key";
 export const AUTH_COOKIE = "abuzar_admin_token";
@@ -45,6 +46,7 @@ export async function requireAdmin() {
   const session = await getSession();
   if (!session) return null;
   try {
+    await ensureDatabaseSchema();
     const [user] = await db.select().from(users).where(eq(users.id, session.uid)).limit(1);
     if (!user || user.role !== "admin") return null;
     return user;

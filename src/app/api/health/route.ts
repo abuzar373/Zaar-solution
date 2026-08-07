@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export async function GET() {
 
   try {
     await db.execute(sql`select 1`);
+    await ensureDatabaseSchema();
     return NextResponse.json({
       ok: true,
       database: "connected",

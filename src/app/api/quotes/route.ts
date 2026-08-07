@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { quotes } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,6 +51,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await ensureDatabaseSchema();
+  } catch (error) {
+    return databaseError("connect to save your quote request", error);
+  }
+
   const ip = req.headers.get("x-forwarded-for") ?? "local";
   const now = Date.now();
   const entry = submissions.get(ip);

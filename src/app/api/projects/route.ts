@@ -3,9 +3,16 @@ import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { databaseError } from "@/lib/api-error";
+import { ensureDatabaseSchema } from "@/db/bootstrap";
 import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
+  try {
+    await ensureDatabaseSchema();
+  } catch (error) {
+    return databaseError("connect to load projects", error);
+  }
+
   const sp = req.nextUrl.searchParams;
   const q = sp.get("q")?.trim();
   const category = sp.get("category")?.trim();
