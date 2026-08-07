@@ -4,7 +4,8 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-const SECRET = process.env.AUTH_SECRET || "abuzar-software-solutions-secret-key";
+const SECRET =
+  process.env.AUTH_SECRET?.trim() || "abuzar-software-solutions-secret-key";
 export const AUTH_COOKIE = "abuzar_admin_token";
 
 function b64url(input: Buffer | string) {

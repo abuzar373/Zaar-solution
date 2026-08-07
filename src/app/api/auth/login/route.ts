@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AUTH_COOKIE, signToken } from "@/lib/auth";
-import { ensureDefaultAdmin } from "@/lib/ensureAdmin";
+import { bootstrapDatabase } from "@/lib/bootstrap";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +41,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // First-run safety net: create the default admin if the table is empty.
-    await ensureDefaultAdmin();
+    // Self-provisioning: create missing tables and the default admin so a
+    // fresh database (e.g. a brand new Supabase project) works immediately.
+    await bootstrapDatabase();
 
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 

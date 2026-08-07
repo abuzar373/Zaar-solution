@@ -18,12 +18,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DATABASE_URL =
   process.argv[2] ??
-  process.env.DATABASE_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:5432/app_db";
+  envOr("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5432/app_db");
 
-const ADMIN_NAME = process.env.ADMIN_NAME ?? "Abuzar Ahmed";
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL ?? "admin@abuzarsoftware.com").toLowerCase();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
+const envOr = (k, d) => {
+  const v = process.env[k];
+  return typeof v === "string" && v.trim() ? v.trim() : d;
+};
+
+const ADMIN_NAME = envOr("ADMIN_NAME", "Abuzar Ahmed");
+const ADMIN_EMAIL = envOr("ADMIN_EMAIL", "admin@abuzarsoftware.com").toLowerCase();
+const ADMIN_PASSWORD = envOr("ADMIN_PASSWORD", "admin123");
 
 const masked = DATABASE_URL.replace(/:[^:@/]+@/, ":****@");
 const isLocal = /@(localhost|127\.0\.0\.1)/.test(DATABASE_URL);

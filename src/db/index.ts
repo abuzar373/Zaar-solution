@@ -9,10 +9,13 @@ import { Pool } from "pg";
  * time, so a missing .env surfaces as a readable error in the UI rather than
  * crashing the whole app (including pages that need no database at all).
  */
+const rawDatabaseUrl = process.env.DATABASE_URL?.trim();
 const databaseUrl =
-  process.env.DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:5432/app_db";
+  rawDatabaseUrl && rawDatabaseUrl.length > 0
+    ? rawDatabaseUrl
+    : "postgresql://postgres:postgres@127.0.0.1:5432/app_db";
 
-if (!process.env.DATABASE_URL) {
+if (!rawDatabaseUrl) {
   console.warn(
     "[db] DATABASE_URL is not set — falling back to postgresql://postgres:postgres@127.0.0.1:5432/app_db\n" +
       "[db] Set DATABASE_URL in your .env file or hosting provider's environment variables."
