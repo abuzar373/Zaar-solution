@@ -33,12 +33,6 @@ const DEFAULT_HERO: Hero = {
 };
 const DEFAULT_STATS: Stats = { clients: 120, projects: 250, years: 8, team: 24 };
 const DEFAULT_ABOUT: About = { intro: "", mission: "", vision: "", process: [] };
-const DEFAULT_CONTACT: ContactInfo = {
-  email: "hello@abuzarsoftware.com",
-  phone: "+92 300 1234567",
-  address: "Suite 402, Tech Tower, Lahore, Pakistan",
-  hours: "Mon – Sat, 9:00 AM – 7:00 PM",
-};
 
 export default function AdminSettings() {
   const toast = useToast();
