@@ -6,6 +6,7 @@ export default function AdminContacts() {
   return (
     <Inbox
       endpoint="/api/contacts"
+      resource="contacts"
       title="Contact Requests"
       subtitle="Messages submitted through the contact form."
       icon="📥"

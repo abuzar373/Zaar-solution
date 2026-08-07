@@ -6,6 +6,7 @@ export default function AdminQuotes() {
   return (
     <Inbox
       endpoint="/api/quotes"
+      resource="quotes"
       title="Quote Requests"
       subtitle="Project quote requests submitted through the website."
       icon="🧾"

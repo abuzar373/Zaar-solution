@@ -67,6 +67,22 @@ export const DEFAULT_CONTACT: ContactInfo = {
   hours: "Mon – Sat, 9:00 AM – 7:00 PM",
 };
 
+export type SocialLinks = {
+  facebook: string;
+  twitter: string;
+  linkedin: string;
+  github: string;
+  instagram: string;
+};
+
+export const DEFAULT_SOCIAL: SocialLinks = {
+  facebook: "",
+  twitter: "",
+  linkedin: "",
+  github: "",
+  instagram: "",
+};
+
 export async function getSettings(): Promise<Record<string, unknown>> {
   const rows = await db.select().from(settings);
   const map: Record<string, unknown> = {};

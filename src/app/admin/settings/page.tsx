@@ -15,6 +15,16 @@ type Stats = { clients: number; projects: number; years: number; team: number };
 type ProcessStep = { title: string; description: string };
 type About = { intro: string; mission: string; vision: string; process: ProcessStep[] };
 type TeamMember = { name: string; role: string; photo: string };
+type ContactInfo = { email: string; phone: string; address: string; hours: string };
+type SocialLinks = { facebook: string; twitter: string; linkedin: string; github: string; instagram: string };
+
+const DEFAULT_CONTACT: ContactInfo = {
+  email: "hello@abuzarsoftware.com",
+  phone: "+92 300 1234567",
+  address: "Suite 402, Tech Tower, Lahore, Pakistan",
+  hours: "Mon – Sat, 9:00 AM – 7:00 PM",
+};
+const DEFAULT_SOCIAL: SocialLinks = { facebook: "", twitter: "", linkedin: "", github: "", instagram: "" };
 
 const DEFAULT_HERO: Hero = {
   heading: "Abuzar Software Solutions",
@@ -31,6 +41,8 @@ export default function AdminSettings() {
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
   const [about, setAbout] = useState<About>(DEFAULT_ABOUT);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const [contactInfo, setContactInfo] = useState<ContactInfo>(DEFAULT_CONTACT);
+  const [social, setSocial] = useState<SocialLinks>(DEFAULT_SOCIAL);
   const [savingKey, setSavingKey] = useState("");
 
   useEffect(() => {
@@ -42,6 +54,8 @@ export default function AdminSettings() {
         if (s.stats) setStats({ ...DEFAULT_STATS, ...s.stats });
         if (s.about) setAbout({ ...DEFAULT_ABOUT, ...s.about });
         if (Array.isArray(s.team)) setTeam(s.team);
+        if (s.contactInfo) setContactInfo({ ...DEFAULT_CONTACT, ...s.contactInfo });
+        if (s.social) setSocial({ ...DEFAULT_SOCIAL, ...s.social });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -177,6 +191,69 @@ export default function AdminSettings() {
         </div>
         <button onClick={() => save("about", about, "About section")} disabled={savingKey === "about"} className={`mt-5 ${btnPrimary}`}>
           {savingKey === "about" ? "Saving…" : "Save About Section"}
+        </button>
+      </section>
+
+      {/* Contact info */}
+      <section className={`${cardCls} p-7`}>
+        <h2 className="font-semibold text-slate-900 dark:text-white">📞 Contact Information</h2>
+        <p className="mt-1 text-xs text-slate-500">Shown on the contact page and in the website footer.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          {([
+            ["email", "Email Address"],
+            ["phone", "Phone Number"],
+            ["address", "Office Address"],
+            ["hours", "Business Hours"],
+          ] as const).map(([key, label]) => (
+            <div key={key}>
+              <label className="mb-1.5 block text-sm font-medium">{label}</label>
+              <input
+                value={contactInfo[key]}
+                onChange={(e) => setContactInfo({ ...contactInfo, [key]: e.target.value })}
+                className={inputCls}
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => save("contactInfo", contactInfo, "Contact information")}
+          disabled={savingKey === "contactInfo"}
+          className={`mt-5 ${btnPrimary}`}
+        >
+          {savingKey === "contactInfo" ? "Saving…" : "Save Contact Information"}
+        </button>
+      </section>
+
+      {/* Social links */}
+      <section className={`${cardCls} p-7`}>
+        <h2 className="font-semibold text-slate-900 dark:text-white">🔗 Social Links</h2>
+        <p className="mt-1 text-xs text-slate-500">Leave a field blank to hide that icon in the footer.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          {([
+            ["linkedin", "LinkedIn"],
+            ["github", "GitHub"],
+            ["twitter", "X / Twitter"],
+            ["facebook", "Facebook"],
+            ["instagram", "Instagram"],
+          ] as const).map(([key, label]) => (
+            <div key={key}>
+              <label className="mb-1.5 block text-sm font-medium">{label}</label>
+              <input
+                type="url"
+                value={social[key]}
+                onChange={(e) => setSocial({ ...social, [key]: e.target.value })}
+                placeholder="https://…"
+                className={inputCls}
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => save("social", social, "Social links")}
+          disabled={savingKey === "social"}
+          className={`mt-5 ${btnPrimary}`}
+        >
+          {savingKey === "social" ? "Saving…" : "Save Social Links"}
         </button>
       </section>
 

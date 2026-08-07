@@ -13,6 +13,8 @@ const NAV = [
   { href: "/admin/contacts", label: "Contact Requests", icon: "📥" },
   { href: "/admin/quotes", label: "Quote Requests", icon: "🧾" },
   { href: "/admin/settings", label: "Website Content", icon: "⚙️" },
+  { href: "/admin/users", label: "Users", icon: "👤" },
+  { href: "/admin/profile", label: "My Profile", icon: "🔑" },
 ];
 
 type User = { name: string; email: string };

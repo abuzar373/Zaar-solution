@@ -1,6 +1,26 @@
 import Link from "next/link";
+import {
+  DEFAULT_CONTACT,
+  DEFAULT_SOCIAL,
+  getSettings,
+  pick,
+  type ContactInfo,
+  type SocialLinks,
+} from "@/lib/content";
 
-export default function Footer() {
+export default async function Footer() {
+  const settingsMap = await getSettings();
+  const info = pick<ContactInfo>(settingsMap, "contactInfo", DEFAULT_CONTACT);
+  const social = pick<SocialLinks>(settingsMap, "social", DEFAULT_SOCIAL);
+
+  const socials = [
+    { key: "linkedin", label: "in", href: social.linkedin },
+    { key: "github", label: "gh", href: social.github },
+    { key: "twitter", label: "𝕏", href: social.twitter },
+    { key: "facebook", label: "f", href: social.facebook },
+    { key: "instagram", label: "ig", href: social.instagram },
+  ].filter((s) => s.href);
+
   return (
     <footer className="border-t border-slate-200/60 dark:border-white/10 bg-white/50 dark:bg-slate-950/50 glass">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-4">
@@ -17,6 +37,22 @@ export default function Footer() {
             We build modern websites, mobile apps and business solutions that help
             companies grow. Premium engineering, beautiful design, measurable results.
           </p>
+          {socials.length > 0 && (
+            <div className="mt-5 flex gap-2">
+              {socials.map((s) => (
+                <a
+                  key={s.key}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={s.key}
+                  className="grid h-9 w-9 place-items-center rounded-lg border border-slate-300/60 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-slate-300 hover:border-indigo-500/50 hover:text-indigo-500 transition-colors"
+                >
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Company</h4>
@@ -24,6 +60,8 @@ export default function Footer() {
             <li><Link className="hover:text-indigo-500 transition-colors" href="/about">About Us</Link></li>
             <li><Link className="hover:text-indigo-500 transition-colors" href="/services">Services</Link></li>
             <li><Link className="hover:text-indigo-500 transition-colors" href="/portfolio">Portfolio</Link></li>
+            <li><Link className="hover:text-indigo-500 transition-colors" href="/projects">Recent Projects</Link></li>
+            <li><Link className="hover:text-indigo-500 transition-colors" href="/testimonials">Testimonials</Link></li>
             <li><Link className="hover:text-indigo-500 transition-colors" href="/login">Admin Login</Link></li>
           </ul>
         </div>
@@ -32,8 +70,20 @@ export default function Footer() {
           <ul className="mt-4 space-y-2.5 text-sm text-slate-600 dark:text-slate-400">
             <li><Link className="hover:text-indigo-500 transition-colors" href="/contact">Contact Us</Link></li>
             <li><Link className="hover:text-indigo-500 transition-colors" href="/quote">Request a Quote</Link></li>
-            <li>hello@abuzarsoftware.com</li>
-            <li>+92 300 1234567</li>
+            {info.email && (
+              <li>
+                <a className="hover:text-indigo-500 transition-colors break-words" href={`mailto:${info.email}`}>
+                  {info.email}
+                </a>
+              </li>
+            )}
+            {info.phone && (
+              <li>
+                <a className="hover:text-indigo-500 transition-colors" href={`tel:${info.phone.replace(/\s/g, "")}`}>
+                  {info.phone}
+                </a>
+              </li>
+            )}
           </ul>
         </div>
       </div>
