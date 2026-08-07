@@ -233,6 +233,8 @@ DATABASE_URL="your-cloud-url" node scripts/seed.mjs
 | `Tables not found. Run npx drizzle-kit push` | You skipped step 5 |
 | `DATABASE_URL is required` | `.env` is missing → `cp .env.example .env` |
 | Login says "Invalid email or password" | Re-run `node scripts/seed.mjs` to reset the admin password |
+| Login says "Cannot reach the database" | Postgres isn't running → `docker compose up -d` |
+| Login says "Database tables are missing" | Run `npx drizzle-kit push`, then `node scripts/seed.mjs` |
 | Redirected to `/login` in a loop | Stale cookie — hard refresh (`Ctrl/Cmd+Shift+R`) or use a private window |
 | Port 3000 already in use | `npm run dev -- -p 3001` |
 | Changed `AUTH_SECRET` and got logged out | Expected — old cookies are invalidated. Just log in again. |

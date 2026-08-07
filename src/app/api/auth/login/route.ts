@@ -4,6 +4,9 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AUTH_COOKIE, signToken } from "@/lib/auth";
+import { ensureDefaultAdmin } from "@/lib/ensureAdmin";
+
+export const dynamic = "force-dynamic";
 
 // naive in-memory rate limiter (per instance)
 const attempts = new Map<string, { count: number; reset: number }>();
@@ -37,20 +40,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
   }
 
-  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-  }
+  try {
+    // First-run safety net: create the default admin if the table is empty.
+    await ensureDefaultAdmin();
 
-  const token = signToken({ uid: user.id, email: user.email });
-  const res = NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
-  });
-  res.cookies.set(AUTH_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-  return res;
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    const token = signToken({ uid: user.id, email: user.email });
+    const res = NextResponse.json({
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    });
+    res.cookies.set(AUTH_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      secure: process.env.NODE_ENV === "production",
+    });
+    return res;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[auth/login] failed:", message);
+
+    // Tables have not been created yet.
+    if (/relation .* does not exist/i.test(message)) {
+      return NextResponse.json(
+        {
+          error:
+            "Database tables are missing. Run `npx drizzle-kit push` and then `node scripts/seed.mjs`.",
+        },
+        { status: 503 }
+      );
+    }
+
+    // Database server unreachable / wrong credentials in DATABASE_URL.
+    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|password authentication|database .* does not exist/i.test(message)) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot reach the database. Check DATABASE_URL in your .env file (try `docker compose up -d`).",
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Server error during login. Check the server console for details." },
+      { status: 500 }
+    );
+  }
 }
