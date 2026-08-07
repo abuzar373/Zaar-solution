@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { fetchJson } from "@/lib/http";
 
 const SERVICES = [
   "Website Development",
@@ -37,13 +38,11 @@ export default function ContactForm() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/contacts", {
+      await fetchJson("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setSuccess(true);
       setForm(initial);
     } catch (err) {

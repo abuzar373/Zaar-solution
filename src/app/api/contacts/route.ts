@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { contacts } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { apiError } from "@/lib/apiError";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -10,40 +11,44 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const submissions = new Map<string, { count: number; reset: number }>();
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const admin = await requireAdmin();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const sp = req.nextUrl.searchParams;
-  const q = sp.get("q")?.trim();
-  const status = sp.get("status")?.trim();
-  const page = Math.max(1, Number(sp.get("page")) || 1);
-  const limit = Math.min(50, Math.max(1, Number(sp.get("limit")) || 10));
+    const sp = req.nextUrl.searchParams;
+    const q = sp.get("q")?.trim();
+    const status = sp.get("status")?.trim();
+    const page = Math.max(1, Number(sp.get("page")) || 1);
+    const limit = Math.min(50, Math.max(1, Number(sp.get("limit")) || 10));
 
-  const conditions: SQL[] = [];
-  if (q) {
-    const clause = or(
-      ilike(contacts.fullName, `%${q}%`),
-      ilike(contacts.email, `%${q}%`),
-      ilike(contacts.company, `%${q}%`),
-      ilike(contacts.message, `%${q}%`)
-    );
-    if (clause) conditions.push(clause);
+    const conditions: SQL[] = [];
+    if (q) {
+      const clause = or(
+        ilike(contacts.fullName, `%${q}%`),
+        ilike(contacts.email, `%${q}%`),
+        ilike(contacts.company, `%${q}%`),
+        ilike(contacts.message, `%${q}%`)
+      );
+      if (clause) conditions.push(clause);
+    }
+    if (status && status !== "all") conditions.push(eq(contacts.status, status));
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    const [items, [{ count }]] = await Promise.all([
+      db
+        .select()
+        .from(contacts)
+        .where(where)
+        .orderBy(desc(contacts.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit),
+      db.select({ count: sql<number>`count(*)::int` }).from(contacts).where(where),
+    ]);
+
+    return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+  } catch (err) {
+    return apiError(err, "GET /api/contacts");
   }
-  if (status && status !== "all") conditions.push(eq(contacts.status, status));
-  const where = conditions.length ? and(...conditions) : undefined;
-
-  const [items, [{ count }]] = await Promise.all([
-    db
-      .select()
-      .from(contacts)
-      .where(where)
-      .orderBy(desc(contacts.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit),
-    db.select({ count: sql<number>`count(*)::int` }).from(contacts).where(where),
-  ]);
-
-  return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
 }
 
 export async function POST(req: NextRequest) {
@@ -75,18 +80,22 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
 
-  const [created] = await db
-    .insert(contacts)
-    .values({
-      fullName,
-      email,
-      phone: String(body.phone ?? "").trim(),
-      company: String(body.company ?? "").trim(),
-      service: String(body.service ?? "").trim(),
-      budget: String(body.budget ?? "").trim(),
-      message,
-    })
-    .returning();
+  try {
+    const [created] = await db
+      .insert(contacts)
+      .values({
+        fullName,
+        email,
+        phone: String(body.phone ?? "").trim(),
+        company: String(body.company ?? "").trim(),
+        service: String(body.service ?? "").trim(),
+        budget: String(body.budget ?? "").trim(),
+        message,
+      })
+      .returning();
 
-  return NextResponse.json({ item: created }, { status: 201 });
+    return NextResponse.json({ item: created }, { status: 201 });
+  } catch (err) {
+    return apiError(err, "POST /api/contacts");
+  }
 }

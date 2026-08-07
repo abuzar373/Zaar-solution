@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { fetchJson } from "@/lib/http";
 
 const PROJECT_TYPES = [
   "Business Website",
@@ -31,13 +32,11 @@ export default function QuotePage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/quotes", {
+      await fetchJson("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setSuccess(true);
       setForm(initial);
     } catch (err) {

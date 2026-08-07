@@ -24,7 +24,16 @@ npm run dev                   # → http://localhost:3000
 
 **Admin login:** `admin@abuzarsoftware.com` / `admin123` → [http://localhost:3000/admin](http://localhost:3000/admin)
 
-📖 **Step-by-step instructions, GitHub push guide, deployment and troubleshooting → [SETUP.md](./SETUP.md)**
+📖 **Local setup, GitHub and deployment → [SETUP.md](./SETUP.md)**
+☁️ **Deploy with a free Supabase database → [SUPABASE.md](./SUPABASE.md)**
+
+### Verify any deployment
+
+```
+GET /api/health?full=1
+```
+
+Reports database connectivity, provider, missing tables and row counts.
 
 ---
 
