@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { parseApiResponse } from "@/lib/api-client";
 
 const PROJECT_TYPES = [
   "Business Website",
@@ -36,7 +37,7 @@ export default function QuotePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
+      const data = await parseApiResponse<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       setSuccess(true);
       setForm(initial);

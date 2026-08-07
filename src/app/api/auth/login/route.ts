@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AUTH_COOKIE, signToken } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
 
 // naive in-memory rate limiter (per instance)
 const attempts = new Map<string, { count: number; reset: number }>();
@@ -37,7 +38,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
   }
 
-  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  let user;
+  try {
+    [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  } catch (error) {
+    return databaseError("log in", error);
+  }
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
 import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,18 +33,22 @@ export async function GET(req: NextRequest) {
   if (status && status !== "all") conditions.push(eq(contacts.status, status));
   const where = conditions.length ? and(...conditions) : undefined;
 
-  const [items, [{ count }]] = await Promise.all([
-    db
-      .select()
-      .from(contacts)
-      .where(where)
-      .orderBy(desc(contacts.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit),
-    db.select({ count: sql<number>`count(*)::int` }).from(contacts).where(where),
-  ]);
+  try {
+    const [items, [{ count }]] = await Promise.all([
+      db
+        .select()
+        .from(contacts)
+        .where(where)
+        .orderBy(desc(contacts.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit),
+      db.select({ count: sql<number>`count(*)::int` }).from(contacts).where(where),
+    ]);
 
-  return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+    return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+  } catch (error) {
+    return databaseError("load contact requests", error);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -75,18 +80,22 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
 
-  const [created] = await db
-    .insert(contacts)
-    .values({
-      fullName,
-      email,
-      phone: String(body.phone ?? "").trim(),
-      company: String(body.company ?? "").trim(),
-      service: String(body.service ?? "").trim(),
-      budget: String(body.budget ?? "").trim(),
-      message,
-    })
-    .returning();
+  try {
+    const [created] = await db
+      .insert(contacts)
+      .values({
+        fullName,
+        email,
+        phone: String(body.phone ?? "").trim(),
+        company: String(body.company ?? "").trim(),
+        service: String(body.service ?? "").trim(),
+        budget: String(body.budget ?? "").trim(),
+        message,
+      })
+      .returning();
 
-  return NextResponse.json({ item: created }, { status: 201 });
+    return NextResponse.json({ item: created }, { status: 201 });
+  } catch (error) {
+    return databaseError("save your contact message", error);
+  }
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Spinner, cardCls } from "@/components/admin/ui";
+import { parseApiResponse } from "@/lib/api-client";
 
 type Stats = {
   counts: {
@@ -47,13 +48,32 @@ function BarChart({ data, color }: { data: { month: string; count: number }[]; c
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/stats")
-      .then((r) => r.json())
-      .then(setStats)
-      .catch(() => {});
+      .then(async (response) => {
+        const data = await parseApiResponse<Partial<Stats> & { error?: string }>(response);
+        if (!response.ok) throw new Error(data.error ?? "Unable to load dashboard statistics");
+        setStats(data as Stats);
+      })
+      .catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : "Unable to load dashboard statistics");
+      });
   }, []);
+
+  if (error) {
+    return (
+      <div className={`${cardCls} mx-auto max-w-2xl p-8 text-center`}>
+        <div className="text-4xl">⚠️</div>
+        <h1 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">Admin database is not connected</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{error}</p>
+        <p className="mt-4 rounded-xl bg-slate-500/5 p-4 text-left text-xs leading-6 text-slate-500">
+          In Vercel, add DATABASE_URL using Supabase&apos;s Transaction Pooler connection string. Then redeploy and open /api/health to verify it.
+        </p>
+      </div>
+    );
+  }
 
   if (!stats) return <Spinner />;
 

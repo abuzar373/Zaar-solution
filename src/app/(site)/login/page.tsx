@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { parseApiResponse } from "@/lib/api-client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@abuzarsoftware.com");
@@ -17,7 +18,7 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: eEmail, password: ePassword }),
       });
-      const data = await res.json();
+      const data = await parseApiResponse<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Login failed");
       // Use window.location.href to perform a hard redirect ensuring cookies are sent cleanly
       window.location.href = "/admin";

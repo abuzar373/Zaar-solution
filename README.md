@@ -175,18 +175,67 @@ git push -u origin main
 
 ---
 
-## 🌐 Deployment
+## 🌐 Deployment with Supabase + Vercel
 
-### Deploying on Vercel + Neon/Supabase PostgreSQL
-1. Create a free PostgreSQL database on [Neon.tech](https://neon.tech) or [Supabase.com](https://supabase.com).
-2. Get your PostgreSQL connection string.
-3. Push code to GitHub.
-4. Import your GitHub repo on [Vercel](https://vercel.com).
-5. In Vercel Environment Variables, add:
-   - `DATABASE_URL` = (your PostgreSQL connection string)
-   - `AUTH_SECRET` = (a long random string)
-6. Run `npx drizzle-kit push` against your cloud database URL to apply tables, and run `psql <DATABASE_URL> -f scripts/seed.sql` to populate demo data.
-7. Click **Deploy**!
+The application uses **Drizzle ORM for every database interaction** and Supabase as the hosted PostgreSQL provider. It also uses Supabase Storage for persistent production image uploads.
+
+### 1. Create the Supabase project
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **Project Settings → Database → Connection string**.
+3. Select **Transaction pooler** and copy the URI. For Vercel/serverless, use port `6543` and keep `?pgbouncer=true`.
+4. Open **Project Settings → API** and copy:
+   - Project URL
+   - `service_role` key (backend only — never expose it in a `NEXT_PUBLIC_*` variable)
+
+### 2. Configure local environment
+Copy the template:
+
+```bash
+cp .env.example .env
+```
+
+Set these values in `.env`:
+
+```env
+DATABASE_URL=postgresql://postgres.PROJECT_REF:DB_PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres?pgbouncer=true
+AUTH_SECRET=use-a-long-random-secret
+NEXT_PUBLIC_SUPABASE_URL=https://PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_STORAGE_BUCKET=uploads
+```
+
+### 3. Create tables and seed the admin account
+Run from the project root:
+
+```bash
+npx drizzle-kit push
+psql "$DATABASE_URL" -f scripts/seed.sql
+```
+
+The seed creates the demo admin:
+
+- Email: `admin@abuzarsoftware.com`
+- Password: `admin123`
+
+### 4. Configure Vercel
+In **Vercel → Project → Settings → Environment Variables**, add the same five variables above for **Production, Preview, and Development**. Then redeploy from the `main` branch.
+
+After deployment, open:
+
+```text
+https://YOUR-VERCEL-DOMAIN.vercel.app/api/health
+```
+
+A healthy response contains `"ok":true`, `"database":"connected"`, and `"supabaseStorageConfigured":true`.
+
+### 5. Persistent image uploads
+Admin uploads use Supabase Storage when the Supabase URL and service-role key are configured. The `uploads` bucket is created automatically on the first upload as a public bucket. Local development still falls back to the local `uploads/` folder.
+
+### Important
+- Do not commit `.env` or any Supabase service-role key.
+- Do not use the Supabase service-role key in frontend code.
+- If the quote/contact form says the server returned an empty response, check `/api/health` and confirm `DATABASE_URL` is configured in Vercel for the active environment.
+
 
 ---
 

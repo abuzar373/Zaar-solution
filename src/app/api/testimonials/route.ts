@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { testimonials } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
 import { and, desc, ilike, or, sql, type SQL } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -21,18 +22,22 @@ export async function GET(req: NextRequest) {
   }
   const where = conditions.length ? and(...conditions) : undefined;
 
-  const [items, [{ count }]] = await Promise.all([
-    db
-      .select()
-      .from(testimonials)
-      .where(where)
-      .orderBy(desc(testimonials.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit),
-    db.select({ count: sql<number>`count(*)::int` }).from(testimonials).where(where),
-  ]);
+  try {
+    const [items, [{ count }]] = await Promise.all([
+      db
+        .select()
+        .from(testimonials)
+        .where(where)
+        .orderBy(desc(testimonials.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit),
+      db.select({ count: sql<number>`count(*)::int` }).from(testimonials).where(where),
+    ]);
 
-  return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+    return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+  } catch (error) {
+    return databaseError("load testimonials", error);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -45,16 +50,20 @@ export async function POST(req: NextRequest) {
   }
   const rating = Math.min(5, Math.max(1, Number(body.rating) || 5));
 
-  const [created] = await db
-    .insert(testimonials)
-    .values({
-      clientName: String(body.clientName).trim(),
-      company: String(body.company ?? "").trim(),
-      review: String(body.review).trim(),
-      photo: String(body.photo ?? "").trim(),
-      rating,
-    })
-    .returning();
+  try {
+    const [created] = await db
+      .insert(testimonials)
+      .values({
+        clientName: String(body.clientName).trim(),
+        company: String(body.company ?? "").trim(),
+        review: String(body.review).trim(),
+        photo: String(body.photo ?? "").trim(),
+        rating,
+      })
+      .returning();
 
-  return NextResponse.json({ item: created }, { status: 201 });
+    return NextResponse.json({ item: created }, { status: 201 });
+  } catch (error) {
+    return databaseError("create testimonial", error);
+  }
 }

@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { services } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
 import { asc } from "drizzle-orm";
 
 export async function GET() {
-  const items = await db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id));
-  return NextResponse.json({ items });
+  try {
+    const items = await db.select().from(services).orderBy(asc(services.sortOrder), asc(services.id));
+    return NextResponse.json({ items });
+  } catch (error) {
+    return databaseError("load services", error);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -18,16 +23,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
   }
 
-  const [created] = await db
-    .insert(services)
-    .values({
-      title: String(body.title).trim(),
-      icon: String(body.icon ?? "💻").trim() || "💻",
-      description: String(body.description).trim(),
-      image: String(body.image ?? "").trim(),
-      sortOrder: Number(body.sortOrder) || 0,
-    })
-    .returning();
+  try {
+    const [created] = await db
+      .insert(services)
+      .values({
+        title: String(body.title).trim(),
+        icon: String(body.icon ?? "💻").trim() || "💻",
+        description: String(body.description).trim(),
+        image: String(body.image ?? "").trim(),
+        sortOrder: Number(body.sortOrder) || 0,
+      })
+      .returning();
 
-  return NextResponse.json({ item: created }, { status: 201 });
+    return NextResponse.json({ item: created }, { status: 201 });
+  } catch (error) {
+    return databaseError("create service", error);
+  }
 }

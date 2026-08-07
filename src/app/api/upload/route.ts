@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { uploadToSupabase } from "@/lib/supabase";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
@@ -12,6 +13,8 @@ const EXT: Record<string, string> = {
   "image/gif": ".gif",
   "image/svg+xml": ".svg",
 };
+export const runtime = "nodejs";
+
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(req: NextRequest) {
@@ -37,6 +40,21 @@ export async function POST(req: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${EXT[file.type]}`;
+
+  if (
+    (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    try {
+      const publicUrl = await uploadToSupabase(file, name);
+      if (publicUrl) return NextResponse.json({ url: publicUrl }, { status: 201 });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Supabase Storage upload failed" },
+        { status: 502 }
+      );
+    }
+  }
 
   try {
     // Try primary uploads folder first

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { databaseError } from "@/lib/api-error";
 import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -27,18 +28,22 @@ export async function GET(req: NextRequest) {
 
   const where = conditions.length ? and(...conditions) : undefined;
 
-  const [items, [{ count }]] = await Promise.all([
-    db
-      .select()
-      .from(projects)
-      .where(where)
-      .orderBy(sort)
-      .limit(limit)
-      .offset((page - 1) * limit),
-    db.select({ count: sql<number>`count(*)::int` }).from(projects).where(where),
-  ]);
+  try {
+    const [items, [{ count }]] = await Promise.all([
+      db
+        .select()
+        .from(projects)
+        .where(where)
+        .orderBy(sort)
+        .limit(limit)
+        .offset((page - 1) * limit),
+      db.select({ count: sql<number>`count(*)::int` }).from(projects).where(where),
+    ]);
 
-  return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+    return NextResponse.json({ items, total: count, page, pages: Math.ceil(count / limit) });
+  } catch (error) {
+    return databaseError("load projects", error);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -53,19 +58,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const [created] = await db
-    .insert(projects)
-    .values({
-      title: String(body.title).trim(),
-      category: String(body.category).trim(),
-      description: String(body.description).trim(),
-      technologies: String(body.technologies ?? "").trim(),
-      githubUrl: String(body.githubUrl ?? "").trim(),
-      liveUrl: String(body.liveUrl ?? "").trim(),
-      image: String(body.image ?? "").trim(),
-      featured: Boolean(body.featured),
-    })
-    .returning();
+  try {
+    const [created] = await db
+      .insert(projects)
+      .values({
+        title: String(body.title).trim(),
+        category: String(body.category).trim(),
+        description: String(body.description).trim(),
+        technologies: String(body.technologies ?? "").trim(),
+        githubUrl: String(body.githubUrl ?? "").trim(),
+        liveUrl: String(body.liveUrl ?? "").trim(),
+        image: String(body.image ?? "").trim(),
+        featured: Boolean(body.featured),
+      })
+      .returning();
 
-  return NextResponse.json({ item: created }, { status: 201 });
+    return NextResponse.json({ item: created }, { status: 201 });
+  } catch (error) {
+    return databaseError("create project", error);
+  }
 }
