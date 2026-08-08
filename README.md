@@ -1,5 +1,8 @@
 # Abuzar Software Solutions
 
+> **🚀 Deploying? Start here → [START.md](./START.md)** — 5 minutes, copy-paste only.
+
+
 A complete, production-ready fullstack web application for a premium software house — public marketing website **plus** a full admin dashboard with authentication, image uploads and CRUD for every resource.
 
 Built with **Next.js 16 (App Router)**, **PostgreSQL**, **Drizzle ORM** and **Tailwind CSS 4**.
