@@ -99,6 +99,9 @@ export default function LoginPage() {
         {error && (
           <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500">
             {error}
+            <a href="/setup" className="mt-2 block font-semibold underline underline-offset-2">
+              Run setup &amp; diagnostics →
+            </a>
           </div>
         )}
 

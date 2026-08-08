@@ -6,6 +6,7 @@ import { databaseError } from "@/lib/api-error";
 import { ensureDatabaseSchema } from "@/db/bootstrap";
 import { and, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { apiError } from "@/lib/apiError";
+import { ensureSchema } from "@/lib/bootstrap";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const submissions = new Map<string, { count: number; reset: number }>();
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest) {
     );
 
   try {
+    // Create the tables if this is a brand new database.
+    await ensureSchema();
+
     const [created] = await db
       .insert(quotes)
       .values({
